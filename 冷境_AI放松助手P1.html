@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <title>冷境 · 冷静期 | AI智能放松助手</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            background-color: #F5F0E6;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, sans-serif;
+            font-weight: 300;
+            color: #333333;
+            line-height: 1.5;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .app {
+            max-width: 480px;
+            width: 100%;
+            background-color: #F5F0E6;
+            border-radius: 32px;
+            min-height: 600px;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+        .page {
+            padding: 32px 24px;
+            display: none;
+            flex-direction: column;
+            min-height: 600px;
+            animation: fadeIn 0.2s ease;
+        }
+        .page.active { display: flex; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .top-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 32px;
+        }
+        .back-btn {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: #8A9BA8;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .back-btn:active { background-color: rgba(138,155,168,0.1); transform: scale(0.96); }
+        .step-title { font-size: 18px; font-weight: 500; color: #8A9BA8; }
+        .settings-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #8A9BA8;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .logo {
+            text-align: center;
+            font-size: 28px;
+            font-weight: 400;
+            letter-spacing: 2px;
+            color: #8A9BA8;
+            margin: 40px 0 20px;
+        }
+        .scene-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-top: 40px;
+        }
+        .scene-btn {
+            background-color: white;
+            border: none;
+            border-radius: 60px;
+            padding: 18px 20px;
+            font-size: 18px;
+            font-weight: 400;
+            color: #333;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.15s;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+            border: 1px solid rgba(138,155,168,0.2);
+        }
+        .scene-btn:active {
+            transform: translateY(2px);
+            background-color: #faf7f2;
+        }
+        .state-cards {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin: 20px 0 30px;
+        }
+        .state-card {
+            background: white;
+            border-radius: 20px;
+            padding: 18px 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            border: 1px solid rgba(138,155,168,0.2);
+            cursor: pointer;
+        }
+        .state-card.selected {
+            border-color: #8A9BA8;
+            background-color: #FEFCF8;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        .state-radio {
+            width: 22px;
+            height: 22px;
+            border-radius: 22px;
+            border: 2px solid #8A9BA8;
+            background: white;
+        }
+        .state-card.selected .state-radio {
+            background-color: #8A9BA8;
+            box-shadow: inset 0 0 0 4px white;
+        }
+        .state-text { font-size: 17px; font-weight: 400; }
+        .state-desc { font-size: 13px; color: #888; }
+        .duration-scroll {
+            margin: 16px 0 24px;
+            overflow-x: auto;
+            white-space: nowrap;
+            padding-bottom: 8px;
+        }
+        .duration-options { display: inline-flex; gap: 12px; }
+        .duration-chip {
+            background: white;
+            border: 1px solid rgba(138,155,168,0.3);
+            border-radius: 40px;
+            padding: 10px 24px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .duration-chip.selected {
+            background: #8A9BA8;
+            color: white;
+            border-color: #8A9BA8;
+        }
+        .recommend-card {
+            background: white;
+            border-radius: 24px;
+            padding: 28px 24px;
+            margin: 20px 0 32px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+            text-align: center;
+        }
+        .rec-activity { font-size: 24px; font-weight: 500; margin-bottom: 12px; color: #2c3e2f; }
+        .rec-desc { font-size: 15px; color: #666; margin-bottom: 16px; }
+        .rec-time { font-size: 13px; color: #8A9BA8; }
+        .double-buttons { display: flex; gap: 16px; margin-top: auto; }
+        .btn-outline {
+            flex: 1;
+            background: transparent;
+            border: 1px solid #8A9BA8;
+            border-radius: 60px;
+            padding: 14px 0;
+            font-size: 16px;
+            color: #8A9BA8;
+            cursor: pointer;
+            text-align: center;
+        }
+        .btn-primary {
+            flex: 1;
+            background: #8A9BA8;
+            border: none;
+            border-radius: 60px;
+            padding: 14px 0;
+            font-size: 16px;
+            font-weight: 500;
+            color: white;
+            cursor: pointer;
+            text-align: center;
+        }
+        /* 完成按钮专用样式 */
+        .complete-btn {
+            background: transparent;
+            border: 1px solid #8A9BA8;
+            border-radius: 40px;
+            padding: 8px 20px;
+            font-size: 14px;
+            font-weight: 400;
+            color: #8A9BA8;
+            cursor: pointer;
+            text-align: center;
+            width: auto;
+            margin: 0 auto;
+            transition: all 0.2s;
+        }
+        .complete-btn:active {
+            background-color: rgba(138,155,168,0.1);
+        }
+        .action-text {
+            background: white;
+            border-radius: 24px;
+            padding: 32px 24px;
+            margin: 40px 0;
+            text-align: center;
+            font-size: 18px;
+            line-height: 1.6;
+            color: #2c3e2f;
+        }
+        .timer-info { text-align: center; color: #8A9BA8; font-size: 14px; margin-bottom: 20px; }
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal {
+            background: white;
+            border-radius: 32px;
+            max-width: 320px;
+            width: 80%;
+            padding: 28px 24px;
+            text-align: center;
+        }
+        .modal h3 { font-size: 20px; margin-bottom: 12px; }
+        .modal p { color: #666; margin-bottom: 24px; }
+        .modal-btn {
+            background: #8A9BA8;
+            border: none;
+            border-radius: 60px;
+            padding: 12px;
+            width: 100%;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .record-input {
+            width: 100%;
+            border: none;
+            border-bottom: 1px solid #e0e0e0;
+            background: transparent;
+            padding: 16px 0;
+            font-size: 16px;
+            font-family: inherit;
+            resize: vertical;
+            margin: 40px 0 60px;
+            outline: none;
+        }
+        .pref-modal {
+            max-width: 90%;
+            width: 360px;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        .pref-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .pref-item span { flex: 1; }
+        .pref-add {
+            margin-top: 16px;
+            display: flex;
+            gap: 8px;
+        }
+        .pref-add input {
+            flex: 1;
+            padding: 10px;
+            border-radius: 40px;
+            border: 1px solid #ddd;
+        }
+        .small-btn {
+            background: #8A9BA8;
+            color: white;
+            border: none;
+            border-radius: 40px;
+            padding: 0 16px;
+            cursor: pointer;
+        }
+        .delete-pref, .edit-pref {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 0 4px;
+        }
+        .delete-pref { color: #cc8866; }
+        .edit-pref { color: #8A9BA8; }
+        .footer-hint { margin-top: auto; text-align: center; color: #aaa; font-size: 12px; padding: 20px 0 10px; }
+        .first-tip {
+            background: #e9e2d8;
+            border-radius: 20px;
+            padding: 16px;
+            margin-top: 24px;
+            text-align: center;
+            font-size: 13px;
+            color: #6b5a4e;
+        }
+    </style>
+</head>
+<body>
+<div class="app" id="app">
+    <!-- 页面1: 场景选择 -->
+    <div id="page1" class="page active">
+        <div class="logo">冷境 · 冷静期</div>
+        <div class="scene-buttons">
+            <button class="scene-btn" data-scene="work">💼 工作压力</button>
+            <button class="scene-btn" data-scene="social">👥 人际压力</button>
+            <button class="scene-btn" data-scene="fatigue">😴 疲劳倦怠</button>
+        </div>
+        <div class="footer-hint">选择一个场景，开始冷静</div>
+        <div style="position: absolute; top: 20px; right: 20px;">
+            <button class="settings-btn" id="openPrefBtn">⚙️</button>
+        </div>
+        <div id="firstTimeTip" class="first-tip" style="display: none;">
+            👋 首次使用？点击右上角⚙️，添加你喜欢的放松方式，AI会智能推荐并帮你拓展新方案。
+        </div>
+    </div>
+
+    <!-- 页面2: 状态+时长 -->
+    <div id="page2" class="page">
+        <div class="top-bar">
+            <button class="back-btn" data-back="page1">←</button>
+            <span class="step-title">状态与时间</span>
+            <div style="width:32px;"></div>
+        </div>
+        <div class="state-cards" id="stateContainer">
+            <div class="state-card" data-state="energetic">
+                <div class="state-radio"></div>
+                <div><div class="state-text">精力充沛</div><div class="state-desc">身体状态良好，可以适度活动</div></div>
+            </div>
+            <div class="state-card" data-state="normal">
+                <div class="state-radio"></div>
+                <div><div class="state-text">正常</div><div class="state-desc">无明显疲劳，常规放松即可</div></div>
+            </div>
+            <div class="state-card" data-state="exhausted">
+                <div class="state-radio"></div>
+                <div><div class="state-text">疲惫心慌</div><div class="state-desc">需要低强度、安全放松</div></div>
+            </div>
+        </div>
+        <div class="duration-scroll">
+            <div class="duration-options" id="durationOptions">
+                <div class="duration-chip" data-minutes="5">5分钟</div>
+                <div class="duration-chip selected" data-minutes="10">10分钟</div>
+                <div class="duration-chip" data-minutes="15">15分钟</div>
+                <div class="duration-chip" data-minutes="0">不限时</div>
+            </div>
+        </div>
+        <button class="btn-primary" id="nextToRecommend" style="margin-top: auto;">下一步</button>
+    </div>
+
+    <!-- 页面3: AI推荐 -->
+    <div id="page3" class="page">
+        <div class="top-bar">
+            <button class="back-btn" data-back="page2">←</button>
+            <span class="step-title">推荐方案</span>
+            <div style="width:32px;"></div>
+        </div>
+        <div class="recommend-card" id="recommendCard">
+            <div class="rec-activity">加载中...</div>
+            <div class="rec-desc"></div>
+            <div class="rec-time"></div>
+        </div>
+        <div class="double-buttons">
+            <button class="btn-outline" id="refreshBtn">换一个</button>
+            <button class="btn-primary" id="startActionBtn">开始</button>
+        </div>
+    </div>
+
+    <!-- 页面4: 执行页 -->
+    <div id="page4" class="page">
+        <div class="top-bar">
+            <button class="back-btn" data-back="page3">←</button>
+            <span class="step-title">开始放松</span>
+            <div style="width:32px;"></div>
+        </div>
+        <div class="action-text" id="actionText"></div>
+        <div id="timerInfo" class="timer-info"></div>
+        <button class="complete-btn" id="completeBtn">完成</button>
+    </div>
+
+    <!-- 页面5: 弹窗 -->
+    <div id="modalOverlay" class="modal-overlay">
+        <div class="modal">
+            <h3>⏰ 冷静时间到</h3>
+            <p>放松时间已结束，可以继续工作了</p>
+            <button class="modal-btn" id="modalCloseBtn">我已冷静</button>
+        </div>
+    </div>
+
+    <!-- 页面6: 记录页 -->
+    <div id="page6" class="page">
+        <div class="top-bar">
+            <button class="back-btn" data-back="page4">←</button>
+            <span class="step-title">记录感受</span>
+            <div style="width:32px;"></div>
+        </div>
+        <textarea class="record-input" id="recordText" placeholder="写下此刻的感受...（可选）" rows="3"></textarea>
+        <button class="btn-primary" id="saveRecordBtn">保存记录</button>
+    </div>
+
+    <!-- 偏好库弹窗 -->
+    <div id="prefModalOverlay" class="modal-overlay">
+        <div class="modal pref-modal">
+            <h3>我的放松方式</h3>
+            <div id="prefList"></div>
+            <div class="pref-add">
+                <input type="text" id="newPrefName" placeholder="名称，如：听歌">
+                <input type="text" id="newPrefLink" placeholder="链接（可选）">
+                <button class="small-btn" id="addPrefBtn">+</button>
+            </div>
+            <button class="modal-btn" id="closePrefBtn" style="margin-top:16px;">关闭</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ========== 请修改这里 ==========
+    const DEEPSEEK_API_KEY = "sk-b18c30d4c88e47a0afede4d84d6b93ee";  // 替换为你的真实 API Key
+    // =================================
+
+    const DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions";
+
+    // ---------- 全局状态 ----------
+    let currentScene = null;
+    let currentState = null;
+    let selectedMinutes = 10;
+    let currentRecommend = null;
+    let timerInterval = null;
+    let remainingSeconds = 0;
+    let isTimerRunning = false;
+    let userPrefs = [];
+    let refreshCount = 0;
+    let recentRecommendations = [];
+
+    // ---------- 偏好库管理 ----------
+    function loadPrefs() {
+        const stored = localStorage.getItem('calm_prefs');
+        if (stored) {
+            userPrefs = JSON.parse(stored);
+        } else {
+            userPrefs = [];
+            document.getElementById('firstTimeTip').style.display = 'block';
+        }
+        renderPrefList();
+    }
+    function savePrefs() {
+        localStorage.setItem('calm_prefs', JSON.stringify(userPrefs));
+        if (userPrefs.length > 0) {
+            document.getElementById('firstTimeTip').style.display = 'none';
+        }
+    }
+    function renderPrefList() {
+        const container = document.getElementById('prefList');
+        if (!container) return;
+        container.innerHTML = '';
+        if (userPrefs.length === 0) {
+            container.innerHTML = '<div style="color:#888; text-align:center; padding:12px;">暂无，点击下方添加</div>';
+        }
+        userPrefs.forEach((pref, idx) => {
+            const div = document.createElement('div');
+            div.className = 'pref-item';
+            div.innerHTML = `
+                <span>${escapeHtml(pref.name)} ${pref.link ? '🔗' : ''}</span>
+                <button class="edit-pref" data-idx="${idx}" style="background:none; border:none; font-size:18px; cursor:pointer; margin-right:8px;">✏️</button>
+                <button class="delete-pref" data-idx="${idx}" style="background:none; border:none; font-size:20px; cursor:pointer;">🗑️</button>
+            `;
+            container.appendChild(div);
+        });
+        document.querySelectorAll('.delete-pref').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const idx = parseInt(btn.dataset.idx);
+                userPrefs.splice(idx, 1);
+                savePrefs();
+                renderPrefList();
+            });
+        });
+        document.querySelectorAll('.edit-pref').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const idx = parseInt(btn.dataset.idx);
+                const pref = userPrefs[idx];
+                const newName = prompt('修改放松方式名称', pref.name);
+                if (newName && newName.trim() !== '') {
+                    const newLink = prompt('修改链接（可选）', pref.link);
+                    userPrefs[idx] = { name: newName.trim(), link: newLink || '' };
+                    savePrefs();
+                    renderPrefList();
+                }
+            });
+        });
+    }
+    function escapeHtml(str) {
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+    document.getElementById('addPrefBtn').addEventListener('click', () => {
+        const name = document.getElementById('newPrefName').value.trim();
+        const link = document.getElementById('newPrefLink').value.trim();
+        if (name) {
+            userPrefs.push({ name, link });
+            savePrefs();
+            renderPrefList();
+            document.getElementById('newPrefName').value = '';
+            document.getElementById('newPrefLink').value = '';
+        } else {
+            alert('请输入名称');
+        }
+    });
+
+    // ---------- 增强版 AI 推荐 ----------
+    async function fetchAIRecommendation(scene, state, minutes, refreshCount) {
+        const prefsText = userPrefs.length ? userPrefs.map(p => p.name).join('、') : '用户未设置任何偏好';
+        const stateText = state === 'energetic' ? '精力充沛' : (state === 'normal' ? '正常' : '疲惫心慌');
+        const sceneText = scene === 'work' ? '工作压力' : (scene === 'social' ? '人际压力' : '疲劳倦怠');
+        const timeText = minutes === 0 ? '不限时' : `${minutes}分钟`;
+
+        const historyText = recentRecommendations.length ? `最近推荐过的活动：${recentRecommendations.join('、')}。请避免重复。` : '';
+
+        let strategyPrompt = "";
+        if (refreshCount <= 2) {
+            strategyPrompt = `这是第${refreshCount+1}次推荐。请从用户喜欢的放松方式列表中，选择一个不同的项目（如果列表中有多个），并给出具体的操作建议。不要推荐列表以外的内容。${historyText}`;
+        } else if (refreshCount <= 5) {
+            strategyPrompt = `这是第${refreshCount+1}次推荐。用户已经尝试过偏好库中的内容。请基于用户的压力场景、身体状态，推荐一个与用户偏好风格相似的新活动（例如，如果用户喜欢听音乐，可以推荐一首类似风格但不同的曲子；如果喜欢读书，可以推荐一本同类型小说）。确保活动强度符合身体状态。${historyText}`;
+        } else {
+            const shouldUsePref = (refreshCount % 3 === 0);
+            if (shouldUsePref) {
+                strategyPrompt = `这是第${refreshCount+1}次推荐。请重新从用户喜欢的放松方式列表中，选择一个不同的项目，并给出具体的操作建议。${historyText}`;
+            } else {
+                strategyPrompt = `这是第${refreshCount+1}次推荐。请基于用户的压力场景、身体状态，推荐一个与用户偏好风格相似的新活动（可以稍微大胆一些，但仍需安全）。${historyText}`;
+            }
+        }
+
+        let intensityGuidance = "";
+        if (state === 'energetic') {
+            intensityGuidance = "用户精力充沛，可以推荐中高强度活动（如跑步、健身、快走、打球、跳舞等）。";
+        } else if (state === 'normal') {
+            intensityGuidance = "用户状态正常，推荐中等强度活动（如听音乐、读书、散步、轻度拉伸）。";
+        } else {
+            intensityGuidance = "用户疲惫心慌，只能推荐低强度、舒缓的活动（如闭眼深呼吸、正念冥想、静坐、听轻音乐）。绝对不要推荐任何运动。";
+        }
+
+        const prompt = `你是一个放松活动推荐助手。用户当前状态：
+- 压力场景：${sceneText}
+- 身体状态：${stateText}
+- 可用放松时间：${timeText}
+- 用户喜欢的放松方式：${prefsText}
+
+${intensityGuidance}
+
+${strategyPrompt}
+
+输出格式：活动名称|详细操作说明|预计耗时（分钟）
+只输出一行，用竖线分隔。示例：听钢琴曲|打开网易云音乐搜索《River flows in you》并播放|5`;
+
+        console.log(`[策略层${refreshCount}] 请求 DeepSeek`);
+
+        try {
+            const response = await fetch(DEEPSEEK_API_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${DEEPSEEK_API_KEY}`
+                },
+                body: JSON.stringify({
+                    model: 'deepseek-chat',
+                    messages: [{ role: 'user', content: prompt }],
+                    temperature: 0.8,
+                    max_tokens: 200
+                })
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('API 请求失败:', response.status, errorText);
+                throw new Error(`API 错误: ${response.status}`);
+            }
+
+            const data = await response.json();
+            const content = data.choices[0].message.content;
+            const parts = content.split('|');
+            const name = parts[0]?.trim() || '深呼吸';
+            const desc = parts[1]?.trim() || '闭上眼睛，缓慢深呼吸5次';
+            const time = parts[2]?.trim() || '3';
+
+            recentRecommendations.unshift(name);
+            if (recentRecommendations.length > 3) recentRecommendations.pop();
+
+            return { name, desc, time };
+        } catch (error) {
+            console.error('AI调用失败:', error);
+            if (refreshCount <= 2 && userPrefs.length) {
+                const fallbackPref = userPrefs[Math.floor(Math.random() * userPrefs.length)];
+                return { name: fallbackPref.name, desc: `尝试${fallbackPref.name}`, time: '5' };
+            } else {
+                return { name: '闭眼深呼吸', desc: '闭上眼睛，缓慢深呼吸5次', time: '3' };
+            }
+        }
+    }
+
+    async function updateRecommendation() {
+        if (!currentScene || !currentState) return;
+        const recCard = document.getElementById('recommendCard');
+        recCard.innerHTML = `
+            <div class="rec-activity">🤖 生成中...</div>
+            <div class="rec-desc">AI 正在为你定制方案（第${refreshCount+1}次推荐）</div>
+            <div class="rec-time"></div>
+        `;
+        const rec = await fetchAIRecommendation(currentScene, currentState, selectedMinutes, refreshCount);
+        currentRecommend = rec;
+
+        // 检查是否有可跳转链接
+        let linkInfo = '';
+        const matchedPref = userPrefs.find(pref => rec.name.includes(pref.name) || pref.name.includes(rec.name));
+        if (matchedPref && matchedPref.link && matchedPref.link.trim() !== '') {
+            linkInfo = `<div style="font-size: 12px; color: #6b8c5c; margin-top: 8px;">🔗 可一键跳转</div>`;
+        }
+
+        recCard.innerHTML = `
+            <div class="rec-activity">${escapeHtml(rec.name)}</div>
+            <div class="rec-desc">${escapeHtml(rec.desc)}</div>
+            <div class="rec-time">⏱️ 预计 ${escapeHtml(rec.time)} 分钟</div>
+            <div style="font-size: 12px; color: #8A9BA8; margin-top: 12px;">第 ${refreshCount+1} 次推荐</div>
+            ${linkInfo}
+        `;
+    }
+
+    // ---------- 计时器 ----------
+    function startTimer(minutes) {
+        if (timerInterval) clearInterval(timerInterval);
+        if (minutes === 0) return;
+        remainingSeconds = minutes * 60;
+        isTimerRunning = true;
+        timerInterval = setInterval(() => {
+            if (remainingSeconds <= 0) {
+                clearInterval(timerInterval);
+                isTimerRunning = false;
+                document.getElementById('modalOverlay').style.display = 'flex';
+            } else {
+                remainingSeconds--;
+                const minsLeft = Math.floor(remainingSeconds / 60);
+                const secsLeft = remainingSeconds % 60;
+                document.getElementById('timerInfo').innerText = `剩余冷静时间：${minsLeft}:${secsLeft.toString().padStart(2, '0')}`;
+            }
+        }, 1000);
+    }
+    function stopTimer() {
+        if (timerInterval) clearInterval(timerInterval);
+        isTimerRunning = false;
+    }
+    function finishAndRecord() {
+        stopTimer();
+        showPage('page6');
+    }
+
+    function showPage(pageId) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(pageId).classList.add('active');
+    }
+
+    // ---------- 事件绑定 ----------
+    document.querySelectorAll('.scene-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            currentScene = btn.dataset.scene;
+            refreshCount = 0;
+            recentRecommendations = [];
+            showPage('page2');
+        });
+    });
+
+    document.querySelectorAll('.state-card').forEach(card => {
+        card.addEventListener('click', () => {
+            document.querySelectorAll('.state-card').forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+            currentState = card.dataset.state;
+        });
+    });
+
+    document.querySelectorAll('.duration-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+            document.querySelectorAll('.duration-chip').forEach(c => c.classList.remove('selected'));
+            chip.classList.add('selected');
+            selectedMinutes = parseInt(chip.dataset.minutes);
+            if (isNaN(selectedMinutes)) selectedMinutes = 0;
+        });
+    });
+
+    document.getElementById('nextToRecommend').addEventListener('click', async () => {
+        if (!currentState) {
+            alert('请选择你的身体状态');
+            return;
+        }
+        refreshCount = 0;
+        recentRecommendations = [];
+        await updateRecommendation();
+        showPage('page3');
+    });
+
+    document.getElementById('refreshBtn').addEventListener('click', async () => {
+        refreshCount++;
+        await updateRecommendation();
+    });
+
+    document.getElementById('startActionBtn').addEventListener('click', () => {
+        if (!currentRecommend) return;
+
+        // 尝试匹配偏好库中的链接
+        const matchedPref = userPrefs.find(pref =>
+            currentRecommend.name.includes(pref.name) || pref.name.includes(currentRecommend.name)
+        );
+
+        if (matchedPref && matchedPref.link && matchedPref.link.trim() !== '') {
+            // 存在链接，直接跳转
+            window.location.href = matchedPref.link;
+            return;
+        }
+
+        // 无链接，进入执行页面
+        document.getElementById('actionText').innerHTML = currentRecommend.desc;
+        if (selectedMinutes > 0) {
+            document.getElementById('timerInfo').innerText = `冷静时长：${selectedMinutes}分钟（后台计时）`;
+            startTimer(selectedMinutes);
+        } else {
+            document.getElementById('timerInfo').innerText = '无计时限制，完成后点击“完成”';
+        }
+        showPage('page4');
+    });
+
+    document.getElementById('completeBtn').addEventListener('click', () => {
+        if (isTimerRunning) {
+            if (confirm('计时尚未结束，是否提前结束并记录？')) {
+                stopTimer();
+                finishAndRecord();
+            }
+        } else {
+            finishAndRecord();
+        }
+    });
+
+    document.getElementById('modalCloseBtn').addEventListener('click', () => {
+        document.getElementById('modalOverlay').style.display = 'none';
+        finishAndRecord();
+    });
+
+    document.getElementById('saveRecordBtn').addEventListener('click', () => {
+        const note = document.getElementById('recordText').value;
+        if (note) {
+            localStorage.setItem('last_calm_note', note);
+            alert('记录已保存，感谢你的冷静练习');
+        }
+        showPage('page1');
+        currentScene = null;
+        currentState = null;
+        selectedMinutes = 10;
+        refreshCount = 0;
+        recentRecommendations = [];
+        document.getElementById('recordText').value = '';
+        stopTimer();
+        document.querySelectorAll('.state-card').forEach(c => c.classList.remove('selected'));
+        document.querySelector('.state-card').classList.add('selected');
+        currentState = 'energetic';
+        document.querySelectorAll('.duration-chip').forEach(c => c.classList.remove('selected'));
+        document.querySelector('.duration-chip[data-minutes="10"]').classList.add('selected');
+    });
+
+    document.querySelectorAll('.back-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const target = btn.dataset.back;
+            if (target) showPage(target);
+        });
+    });
+
+    document.getElementById('openPrefBtn').addEventListener('click', () => {
+        renderPrefList();
+        document.getElementById('prefModalOverlay').style.display = 'flex';
+    });
+    document.getElementById('closePrefBtn').addEventListener('click', () => {
+        document.getElementById('prefModalOverlay').style.display = 'none';
+    });
+
+    loadPrefs();
+    document.querySelector('.state-card').classList.add('selected');
+    currentState = 'energetic';
+</script>
+</body>
+</html>
